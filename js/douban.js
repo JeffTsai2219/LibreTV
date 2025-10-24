@@ -220,7 +220,7 @@ async function fillAndSearchWithDouban(title) {
                 }
             }
             
-            showToast('已自动选择豆瓣资源API', 'info');
+            // showToast('已自动选择豆瓣资源API', 'info');
         }
     }
     
