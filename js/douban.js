@@ -58,7 +58,17 @@ function initDouban() {
     // 设置豆瓣开关的初始状态
     const doubanToggle = document.getElementById('doubanToggle');
     if (doubanToggle) {
-        const isEnabled = localStorage.getItem('doubanEnabled') === 'true';
+        const storedDoubanPref = localStorage.getItem('doubanEnabled');
+        let isEnabled;
+
+        if (storedDoubanPref === null) {
+            // 首次加载默认开启豆瓣推荐
+            isEnabled = true;
+            localStorage.setItem('doubanEnabled', 'true');
+        } else {
+            isEnabled = storedDoubanPref === 'true';
+        }
+
         doubanToggle.checked = isEnabled;
         
         // 设置开关外观
@@ -72,7 +82,7 @@ function initDouban() {
         // 添加事件监听
         doubanToggle.addEventListener('change', function(e) {
             const isChecked = e.target.checked;
-            localStorage.setItem('doubanEnabled', isChecked);
+            localStorage.setItem('doubanEnabled', isChecked ? 'true' : 'false');
             
             // 更新开关外观
             if (isChecked) {
