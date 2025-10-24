@@ -1,13 +1,27 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh-Hans">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="index,follow">
     <title>自由影界 - 免费在线视频搜索与观看平台</title>
     <meta name="description" content="自由影界是一个免费的在线视频搜索平台，无广告、安全，提供来自多个视频源的内容搜索与观看服务，无需注册即可使用。">
     <meta name="keywords" content="在线视频,免费视频,视频搜索,电影,电视剧,自由影界">
     <meta name="author" content="自由影界团队">
+    <link rel="canonical" href="https://zfreefilm.com/">
+    <link rel="alternate" hreflang="zh-Hans" href="https://zfreefilm.com/">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="自由影界 - 免费在线视频搜索与观看平台">
+    <meta property="og:description" content="自由影界聚合多个视频源，让你轻松搜索并观看热门电影、电视剧、综艺与动漫，无需注册即可使用。">
+    <meta property="og:url" content="https://zfreefilm.com/">
+    <meta property="og:site_name" content="自由影界">
+    <meta property="og:image" content="https://zfreefilm.com/image/logo-banner.png">
+    <meta property="og:locale" content="zh_CN">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="自由影界 - 免费在线视频搜索与观看平台">
+    <meta name="twitter:description" content="免费聚合多个视频源，畅享热门影视剧与综艺。">
+    <meta name="twitter:image" content="https://zfreefilm.com/image/logo-banner.png">
 
     <!-- Favicon -->
     <link rel="icon" href="image/logo.png">
@@ -218,7 +232,7 @@
         </div>
     </div>
 
-    <div class="container mx-auto px-4 py-8 flex flex-col h-screen">
+    <div class="container mx-auto px-4 py-8 flex flex-col min-h-screen">
         <div class="flex-1 flex flex-col">
             <!-- 网站标志和口号 -->
             <header class="text-center mb-2">
@@ -331,6 +345,100 @@
         </div>
     </div>
 
+    <section id="about"
+        class="container mx-auto px-4 py-12 text-gray-300 space-y-6">
+        <h2 class="text-3xl font-bold text-white">自由影界是什么？</h2>
+        <p class="leading-relaxed">
+            自由影界是一个专注于<span class="text-white font-medium">免费在线视频搜索</span>的聚合平台，帮你快速定位热门电影、电视剧、动漫与综艺资源。
+            我们整合了多个稳定的视频 API，提供一站式检索、筛选与播放体验，支持桌面和移动设备访问，无需注册即可立即观影。
+        </p>
+        <div class="grid gap-6 md:grid-cols-3">
+            <article class="bg-[#111] border border-[#222] rounded-xl p-6 h-full">
+                <h3 class="text-xl font-semibold text-white mb-2">多源聚合</h3>
+                <p class="text-sm leading-relaxed">
+                    对接超过 50 个视频内容源，涵盖院线大片、热播剧集、纪录片与小众影片，搜索结果支持过滤和收藏。
+                </p>
+            </article>
+            <article class="bg-[#111] border border-[#222] rounded-xl p-6 h-full">
+                <h3 class="text-xl font-semibold text-white mb-2">无广告播放</h3>
+                <p class="text-sm leading-relaxed">
+                    播放体验纯净可靠，通过分片广告过滤与观影历史记录，让你专注内容本身，适合长时间追剧。
+                </p>
+            </article>
+            <article class="bg-[#111] border border-[#222] rounded-xl p-6 h-full">
+                <h3 class="text-xl font-semibold text-white mb-2">智能搜索与推荐</h3>
+                <p class="text-sm leading-relaxed">
+                    搜索框支持模糊匹配与热词提示，豆瓣热门推荐每天刷新，帮助你不错过任何一部高分佳作。
+                </p>
+            </article>
+        </div>
+    </section>
+
+    <section id="categories" class="container mx-auto px-4 pb-12 text-gray-300">
+        <h2 class="text-3xl font-bold text-white mb-6">热门栏目与专题</h2>
+        <div class="grid gap-6 md:grid-cols-2">
+            <article class="bg-[#111] border border-[#222] rounded-xl p-6">
+                <h3 class="text-xl font-semibold text-white mb-3">电影与剧集</h3>
+                <ul class="list-disc list-inside space-y-2 text-sm">
+                    <li>院线大片、动作片、爱情片、科幻片一键直达</li>
+                    <li>热门电视剧与网剧同步更新，按年份、地区筛选</li>
+                    <li>纪录片与短纪录专题，满足深度影迷需求</li>
+                </ul>
+            </article>
+            <article class="bg-[#111] border border-[#222] rounded-xl p-6">
+                <h3 class="text-xl font-semibold text-white mb-3">综艺与动漫</h3>
+                <ul class="list-disc list-inside space-y-2 text-sm">
+                    <li>华语综艺、日韩综艺、真人秀每日更新</li>
+                    <li>热门动画、日漫新番、国创动画快速检索</li>
+                    <li>儿童频道与亲子内容，支持收藏与历史记录</li>
+                </ul>
+            </article>
+        </div>
+        <p class="mt-6 text-sm leading-relaxed">
+            如果你想直接进入播放器，可访问
+            <a class="text-pink-400 hover:text-pink-300 underline" href="watch.html">在线播放器</a>，
+            或浏览我们的
+            <a class="text-pink-400 hover:text-pink-300 underline" href="privacy.html">隐私政策</a>
+            了解数据处理方式。
+        </p>
+    </section>
+
+    <section id="guide" class="container mx-auto px-4 pb-12 text-gray-300 space-y-6">
+        <h2 class="text-3xl font-bold text-white">三步快速开播</h2>
+        <ol class="list-decimal list-inside space-y-3 text-sm leading-relaxed">
+            <li>在搜索框输入影视名称、演员或关键字，系统会实时匹配相关资源。</li>
+            <li>切换数据源或标签，挑选清晰度、语言、字幕等最合适的播放线路。</li>
+            <li>点击条目即可进入播放页，支持投屏、收藏及分享观看链接。</li>
+        </ol>
+        <p class="text-sm leading-relaxed">
+            想获取更多观影灵感，可关注首页的豆瓣热门推荐或在收藏夹中管理你的常看频道，我们也会持续上线专题页面与影单。
+        </p>
+    </section>
+
+    <section id="faq" class="container mx-auto px-4 pb-16 text-gray-300 space-y-6">
+        <h2 class="text-3xl font-bold text-white">常见问题</h2>
+        <dl class="space-y-4">
+            <div class="bg-[#111] border border-[#222] rounded-xl p-6">
+                <dt class="text-lg font-semibold text-white">自由影界提供的内容是否合法？</dt>
+                <dd class="text-sm leading-relaxed mt-2">
+                    自由影界只是视频搜索和聚合工具，不存储、上传或修改任何影视文件，所有播放内容均来自第三方公开 API。
+                </dd>
+            </div>
+            <div class="bg-[#111] border border-[#222] rounded-xl p-6">
+                <dt class="text-lg font-semibold text-white">为什么搜索结果偶尔无法播放？</dt>
+                <dd class="text-sm leading-relaxed mt-2">
+                    个别资源可能因为上游接口调整而暂时失效，可切换其他数据源或稍后再试，我们会定期清理无效线路。
+                </dd>
+            </div>
+            <div class="bg-[#111] border border-[#222] rounded-xl p-6">
+                <dt class="text-lg font-semibold text-white">如何保护我的观看隐私？</dt>
+                <dd class="text-sm leading-relaxed mt-2">
+                    浏览器本地保存的历史记录可以在设置面板一键清除，我们也不会要求登录或收集可识别个人身份的信息。
+                </dd>
+            </div>
+        </dl>
+    </section>
+
     <!-- 页脚区域 -->
     <footer class="footer mt-8 py-6 border-t border-[#333] bg-[#0a0a0a]">
         <div class="container mx-auto px-4">
@@ -393,14 +501,48 @@
     {
         "@context": "https://schema.org",
         "@type": "WebSite",
+        "@id": "https://zfreefilm.com/#website",
         "name": "自由影界",
-        "url": "https://libretv.is-an.org/",
+        "url": "https://zfreefilm.com/",
         "description": "免费在线视频搜索与观看平台",
         "potentialAction": {
             "@type": "SearchAction",
-            "target": "https://libretv.is-an.org/?s={search_term_string}",
+            "target": "https://zfreefilm.com/s={search_term_string}",
             "query-input": "required name=search_term_string"
         }
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "@id": "https://zfreefilm.com/#faq",
+        "mainEntity": [
+            {
+                "@type": "Question",
+                "name": "自由影界提供的内容是否合法？",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "自由影界只做在线视频搜索与聚合，不存储、上传或改动任何影视文件，所有播放内容均来自第三方公开 API。"
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "为什么搜索结果偶尔无法播放？",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "个别资源可能因为第三方接口调整而暂时失效，建议切换其他数据源或稍后再试，我们会持续监控并清理无效线路。"
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "要怎么保护我的观看隐私？",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "自由影界不会要求登录，也不会收集可识别个人身份的信息。你可以在设置面板中随时清除本地历史记录和 Cookie。"
+                }
+            }
+        ]
     }
     </script>
 
