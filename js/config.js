@@ -13,7 +13,7 @@ const PASSWORD_CONFIG = {
 
 // 网站信息配置
 const SITE_CONFIG = {
-    name: 'LibreTV',
+    name: '自由影界',
     url: 'https://libretv.is-an.org',
     description: '免费在线视频搜索与观看平台',
     logo: 'image/logo.png',
@@ -39,36 +39,19 @@ const API_SITES = {
         api: 'https://tyyszy.com/api.php/provide/vod',
         name: '天涯资源',
     },
-    xiaomaomi: {
-        api: 'https://zy.xmm.hk/api.php/provide/vod',
-        name: '小猫咪资源',
-    },
     ffzy: {
         api: 'http://ffzy5.tv/api.php/provide/vod',
         name: '非凡影视',
         detail: 'http://ffzy5.tv', 
     },
-    heimuer: {
-        api: 'https://json.heimuer.xyz/api.php/provide/vod',
-        name: '黑木耳',
-        detail: 'https://heimuer.tv', 
-    },
     zy360: {
         api: 'https://360zy.com/api.php/provide/vod',
         name: '360资源',
-    },
-    iqiyi: {
-        api: 'https://www.iqiyizyapi.com/api.php/provide/vod',
-        name: 'iqiyi资源',
     },
     wolong: {
         api: 'https://wolongzyw.com/api.php/provide/vod',
         name: '卧龙资源',
     }, 
-    hwba: {
-        api: 'https://cjhwba.com/api.php/provide/vod',
-        name: '华为吧资源',
-    },
     jisu: {
         api: 'https://jszyapi.com/api.php/provide/vod',
         name: '极速资源',
@@ -114,11 +97,11 @@ const API_SITES = {
         api: 'https://cj.lziapi.com/api.php/provide/vod/',
         name: '量子资源站'
     },
-    testSource: {
-        api: 'https://www.example.com/api.php/provide/vod',
-        name: '空内容测试源',
-        adult: true
-    },
+    // testSource: {
+    //     api: 'https://www.example.com/api.php/provide/vod',
+    //     name: '空内容测试源',
+    //     adult: true
+    // },
     //ARCHIVE https://telegra.ph/APIs-08-12
 };
 
@@ -127,19 +110,24 @@ function extendAPISites(newSites) {
     Object.assign(API_SITES, newSites);
 }
 
-// 暴露到全局
-window.API_SITES = API_SITES;
-window.extendAPISites = extendAPISites;
-
-
 // 添加聚合搜索的配置选项
 const AGGREGATED_SEARCH_CONFIG = {
     enabled: true,             // 是否启用聚合搜索
     timeout: 8000,            // 单个源超时时间（毫秒）
     maxResults: 10000,          // 最大结果数量
     parallelRequests: true,   // 是否并行请求所有源
-    showSourceBadges: true    // 是否显示来源徽章
+    showSourceBadges: false   // 是否显示来源徽章
 };
+
+// 搜索策略配置：用于控制批次加载与并发
+const SEARCH_STRATEGY_CONFIG = {
+    initialBatchSize: 1,          // 首批加载的数据源数量
+    maxConcurrentRequests: 4,     // 每批次的最大并发请求数
+    secondaryBatchDelay: 400      // 启动后续批次前的延迟（毫秒）
+};
+
+// 默认优先搜索的资源源代码
+const DEFAULT_PRIMARY_SOURCE = 'tyyszy';
 
 // 抽象API请求配置
 const API_CONFIG = {
@@ -181,6 +169,13 @@ const PLAYER_CONFIG = {
     adFilteringEnabled: true, // 默认开启分片广告过滤
     adFilteringStorage: 'adFilteringEnabled' // 存储广告过滤设置的键名
 };
+
+// 暴露到全局
+window.API_SITES = API_SITES;
+window.extendAPISites = extendAPISites;
+window.AGGREGATED_SEARCH_CONFIG = AGGREGATED_SEARCH_CONFIG;
+window.SEARCH_STRATEGY_CONFIG = SEARCH_STRATEGY_CONFIG;
+window.DEFAULT_PRIMARY_SOURCE = DEFAULT_PRIMARY_SOURCE;
 
 // 增加错误信息本地化
 const ERROR_MESSAGES = {

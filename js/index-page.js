@@ -19,9 +19,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // URL搜索参数处理脚本
-    // 首先检查是否是播放URL格式 (/watch 开头的路径)
-    if (window.location.pathname.startsWith('/watch')) {
-        // 播放URL，不做额外处理，watch.html会处理重定向
+    // 首先检查是否是播放器页面
+    if (window.location.pathname.startsWith('/player')) {
+        // 播放页无需处理首页搜索逻辑
         return;
     }
     
@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 try {
                     window.history.replaceState(
                         { search: keyword }, 
-                        `搜索: ${keyword} - LibreTV`, 
+                        `搜索: ${keyword} - 自由影界`, 
                         window.location.href
                     );
                 } catch (e) {
@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', function() {
             try {
                 window.history.replaceState(
                     { search: searchQuery }, 
-                    `搜索: ${searchQuery} - LibreTV`, 
+                    `搜索: ${searchQuery} - 自由影界`, 
                     `/s=${encodeURIComponent(searchQuery)}`
                 );
             } catch (e) {

@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# LibreTV 本地构建 Docker 容器启动脚本
+# 自由影界（LibreTV）本地构建 Docker 容器启动脚本
 # 此脚本使用本地代码构建 Docker 镜像并运行
 
 echo "========================================"
-echo "LibreTV 本地构建脚本"
+echo "自由影界（LibreTV）本地构建脚本"
 echo "========================================"
 echo
 
@@ -39,7 +39,7 @@ docker run -d --name libretv-local -p 8080:8080 -e PASSWORD=123456 libretv-local
 if [ $? -eq 0 ]; then
     echo
     echo "========================================"
-    echo "LibreTV 服务已成功启动！"
+    echo "自由影界服务已成功启动！"
     echo "========================================"
     echo
     echo "访问地址: http://localhost:8080"

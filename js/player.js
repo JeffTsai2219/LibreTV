@@ -91,6 +91,7 @@ let shortcutHintTimeout = null; // 用于控制快捷键提示显示时间
 let adFilteringEnabled = true; // 默认开启广告过滤
 let progressSaveInterval = null; // 定期保存进度的计时器
 let currentVideoUrl = ''; // 记录当前实际的视频URL
+let currentVideoMeta = null; // 记录当前视频详情信息
 const isWebkit = (typeof window.webkitConvertPointFromNodeToPage === 'function')
 Artplayer.FULLSCREEN_WEB_IN_BODY = true;
 
@@ -99,7 +100,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // 先检查用户是否已通过密码验证
     if (!isPasswordVerified()) {
         // 隐藏加载提示
-        document.getElementById('player-loading').style.display = 'none';
+        hidePlayerLoading();
         return;
     }
 
@@ -108,10 +109,108 @@ document.addEventListener('DOMContentLoaded', function () {
 
 // 监听密码验证成功事件
 document.addEventListener('passwordVerified', () => {
-    document.getElementById('player-loading').style.display = 'block';
-
+    showPlayerLoading();
     initializePageContent();
 });
+
+function loadCurrentVideoMeta() {
+    try {
+        currentVideoMeta = JSON.parse(localStorage.getItem('currentVideoDetail') || 'null');
+    } catch (e) {
+        currentVideoMeta = null;
+    }
+    renderVideoMetaPanel();
+}
+
+function renderVideoMetaPanel() {
+    const container = document.getElementById('videoMetaContainer');
+    const statsEl = document.getElementById('videoMetaStats');
+    const descEl = document.getElementById('videoMetaDescription');
+    const posterEl = document.getElementById('videoMetaPosterWrapper');
+
+    if (!container || !statsEl || !descEl || !posterEl) {
+        return;
+    }
+
+    statsEl.innerHTML = '';
+    descEl.textContent = '';
+    posterEl.innerHTML = '';
+    posterEl.classList.add('hidden');
+
+    if (!currentVideoMeta) {
+        container.classList.add('hidden');
+        return;
+    }
+
+    const stats = [
+        { label: '来源', value: currentVideoMeta.sourceName },
+        { label: '类型', value: currentVideoMeta.type },
+        { label: '年份', value: currentVideoMeta.year },
+        { label: '地区', value: currentVideoMeta.area },
+        { label: '导演', value: currentVideoMeta.director },
+        { label: '主演', value: currentVideoMeta.actor },
+        { label: '备注', value: currentVideoMeta.remarks }
+    ].filter(item => item.value && String(item.value).trim() !== '');
+
+    const hasPoster = currentVideoMeta.pic && String(currentVideoMeta.pic).trim() !== '';
+    const hasDescription = currentVideoMeta.desc && String(currentVideoMeta.desc).trim() !== '';
+
+    if (stats.length === 0 && !hasPoster && !hasDescription) {
+        container.classList.add('hidden');
+        return;
+    }
+
+    stats.forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'text-sm text-gray-300 flex flex-wrap';
+
+        const labelSpan = document.createElement('span');
+        labelSpan.className = 'text-gray-500 mr-1';
+        labelSpan.textContent = `${item.label}：`;
+
+        const valueSpan = document.createElement('span');
+        valueSpan.textContent = item.value;
+
+        row.appendChild(labelSpan);
+        row.appendChild(valueSpan);
+        statsEl.appendChild(row);
+    });
+
+    if (hasDescription) {
+        descEl.textContent = currentVideoMeta.desc;
+    } else {
+        descEl.textContent = '';
+    }
+
+    if (hasPoster) {
+        const img = document.createElement('img');
+        img.src = currentVideoMeta.pic;
+        img.alt = currentVideoMeta.title || '';
+        img.className = 'w-full h-full object-cover';
+        img.loading = 'lazy';
+        img.onerror = () => {
+            img.remove();
+            posterEl.classList.add('hidden');
+        };
+        posterEl.appendChild(img);
+        posterEl.classList.remove('hidden');
+    }
+
+    container.classList.remove('hidden');
+}
+
+function showPlayerLoading(message = '正在加载视频...') {
+    const loadingEl = document.getElementById('player-loading');
+    if (!loadingEl) return;
+    loadingEl.style.display = 'flex';
+    loadingEl.innerHTML = message;
+}
+
+function hidePlayerLoading() {
+    const loadingEl = document.getElementById('player-loading');
+    if (!loadingEl) return;
+    loadingEl.style.display = 'none';
+}
 
 // 初始化页面内容
 function initializePageContent() {
@@ -218,8 +317,9 @@ function initializePageContent() {
     }
 
     // 设置页面标题
-    document.title = currentVideoTitle + ' - LibreTV播放器';
+    document.title = currentVideoTitle + ' - 自由影界播放器';
     document.getElementById('videoTitle').textContent = currentVideoTitle;
+    loadCurrentVideoMeta();
 
     // 初始化播放器
     if (videoUrl) {
@@ -497,7 +597,7 @@ function initPlayer(videoUrl) {
                 // 监听视频播放事件
                 video.addEventListener('playing', function () {
                     playbackStarted = true;
-                    document.getElementById('player-loading').style.display = 'none';
+                    hidePlayerLoading();
                     document.getElementById('error').style.display = 'none';
                 });
 
@@ -572,12 +672,12 @@ function initPlayer(videoUrl) {
 
                 // 监听分段加载事件
                 hls.on(Hls.Events.FRAG_LOADED, function () {
-                    document.getElementById('player-loading').style.display = 'none';
+                    hidePlayerLoading();
                 });
 
                 // 监听级别加载事件
                 hls.on(Hls.Events.LEVEL_LOADED, function () {
-                    document.getElementById('player-loading').style.display = 'none';
+                    hidePlayerLoading();
                 });
             }
         }
@@ -650,7 +750,7 @@ function initPlayer(videoUrl) {
     });
 
     art.on('video:loadedmetadata', function() {
-        document.getElementById('player-loading').style.display = 'none';
+        hidePlayerLoading();
         videoHasEnded = false; // 视频加载时重置结束标志
         // 优先使用URL传递的position参数
         const urlParams = new URLSearchParams(window.location.search);
@@ -699,10 +799,7 @@ function initPlayer(videoUrl) {
         }
 
         // 隐藏所有加载指示器
-        const loadingElements = document.querySelectorAll('#player-loading, .player-loading-container');
-        loadingElements.forEach(el => {
-            if (el) el.style.display = 'none';
-        });
+        hidePlayerLoading();
 
         showError('视频播放失败: ' + (error.message || '未知错误'));
     });
@@ -749,11 +846,12 @@ function initPlayer(videoUrl) {
 
         const loadingElement = document.getElementById('player-loading');
         if (loadingElement && loadingElement.style.display !== 'none') {
-            loadingElement.innerHTML = `
-                <div class="loading-spinner"></div>
-                <div>视频加载时间较长，请耐心等待...</div>
-                <div style="font-size: 12px; color: #aaa; margin-top: 10px;">如长时间无响应，请尝试其他视频源</div>
-            `;
+            showPlayerLoading(`
+                <div style="text-align:center;">
+                    <div>视频加载时间较长，请耐心等待...</div>
+                    <div style="font-size: 12px; color: #aaa; margin-top: 10px;">如长时间无响应，请尝试其他视频源</div>
+                </div>
+            `);
         }
     }, 10000);
 }
@@ -809,8 +907,7 @@ function showError(message) {
     if (art && art.video && art.video.currentTime > 1) {
         return;
     }
-    const loadingEl = document.getElementById('player-loading');
-    if (loadingEl) loadingEl.style.display = 'none';
+    hidePlayerLoading();
     const errorEl = document.getElementById('error');
     if (errorEl) errorEl.style.display = 'flex';
     const errorMsgEl = document.getElementById('error-message');
@@ -905,11 +1002,7 @@ function playEpisode(index) {
     // 首先隐藏之前可能显示的错误
     document.getElementById('error').style.display = 'none';
     // 显示加载指示器
-    document.getElementById('player-loading').style.display = 'flex';
-    document.getElementById('player-loading').innerHTML = `
-        <div class="loading-spinner"></div>
-        <div>正在加载视频...</div>
-    `;
+    showPlayerLoading();
 
     // 获取 sourceCode
     const urlParams2 = new URLSearchParams(window.location.search);
@@ -1606,7 +1699,6 @@ async function showSwitchResourceModal() {
     modalContent.innerHTML = '<div style="text-align:center;padding:20px;color:#aaa;grid-column:1/-1;">正在加载资源列表...</div>';
     modal.classList.remove('hidden');
 
-    // 搜索
     const resourceOptions = selectedAPIs.map((curr) => {
         if (API_SITES[curr]) {
             return { key: curr, name: API_SITES[curr].name };
@@ -1617,26 +1709,55 @@ async function showSwitchResourceModal() {
         }
         return { key: curr, name: '未知资源' };
     });
-    let allResults = {};
-    await Promise.all(resourceOptions.map(async (opt) => {
-        let queryResult = await searchByAPIAndKeyWord(opt.key, currentVideoTitle);
-        if (queryResult.length == 0) {
-            return 
-        }
-        // 优先取完全同名资源，否则默认取第一个
-        let result = queryResult[0]
-        queryResult.forEach((res) => {
-            if (res.vod_name == currentVideoTitle) {
-                result = res;
-            }
-        })
-        allResults[opt.key] = result;
-    }));
 
-    // 更新状态显示：开始速率测试
+    const allResults = {};
+
+    try {
+        const cachedSources = JSON.parse(localStorage.getItem('currentAvailableSources') || '[]');
+        if (Array.isArray(cachedSources) && cachedSources.length > 0) {
+            cachedSources.forEach((src) => {
+                if (!src || !src.source_code || !src.vod_id) return;
+                const baseResult = src.raw || {
+                    vod_id: src.vod_id,
+                    vod_name: src.vod_name,
+                    vod_pic: src.vod_pic,
+                    source_name: src.source_name,
+                    source_code: src.source_code
+                };
+                if (!allResults[src.source_code]) {
+                    allResults[src.source_code] = baseResult;
+                }
+            });
+        }
+    } catch (error) {
+        console.warn('解析缓存资源失败:', error);
+    }
+
+    const sourcesToFetch = resourceOptions.filter(opt => !allResults[opt.key]);
+
+    if (sourcesToFetch.length > 0) {
+        await Promise.all(sourcesToFetch.map(async (opt) => {
+            let queryResult = await searchByAPIAndKeyWord(opt.key, currentVideoTitle);
+            if (queryResult.length === 0) {
+                return;
+            }
+            let result = queryResult[0];
+            queryResult.forEach((res) => {
+                if (res.vod_name === currentVideoTitle) {
+                    result = res;
+                }
+            });
+            allResults[opt.key] = result;
+        }));
+    }
+
+    if (Object.keys(allResults).length === 0) {
+        modalContent.innerHTML = '<div style="text-align:center;padding:20px;color:#aaa;grid-column:1/-1;">未找到可用资源，请稍后重试</div>';
+        return;
+    }
+
     modalContent.innerHTML = '<div style="text-align:center;padding:20px;color:#aaa;grid-column:1/-1;">正在测试各资源速率...</div>';
 
-    // 同时测试所有资源的速率
     const speedResults = {};
     await Promise.all(Object.entries(allResults).map(async ([sourceKey, result]) => {
         if (result) {
@@ -1644,37 +1765,32 @@ async function showSwitchResourceModal() {
         }
     }));
 
-    // 对结果进行排序
     const sortedResults = Object.entries(allResults).sort(([keyA, resultA], [keyB, resultB]) => {
-        // 当前播放的源放在最前面
         const isCurrentA = String(keyA) === String(currentSourceCode) && String(resultA.vod_id) === String(currentVideoId);
         const isCurrentB = String(keyB) === String(currentSourceCode) && String(resultB.vod_id) === String(currentVideoId);
-        
+
         if (isCurrentA && !isCurrentB) return -1;
         if (!isCurrentA && isCurrentB) return 1;
-        
-        // 其余按照速度排序，速度快的在前面（速度为-1表示失败，排到最后）
+
         const speedA = speedResults[keyA]?.speed || 99999;
         const speedB = speedResults[keyB]?.speed || 99999;
-        
+
         if (speedA === -1 && speedB !== -1) return 1;
         if (speedA !== -1 && speedB === -1) return -1;
         if (speedA === -1 && speedB === -1) return 0;
-        
+
         return speedA - speedB;
     });
 
-    // 渲染资源列表
     let html = '<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 p-4">';
-    
+
     for (const [sourceKey, result] of sortedResults) {
         if (!result) continue;
-        
-        // 修复 isCurrentSource 判断，确保类型一致
+
         const isCurrentSource = String(sourceKey) === String(currentSourceCode) && String(result.vod_id) === String(currentVideoId);
-        const sourceName = resourceOptions.find(opt => opt.key === sourceKey)?.name || '未知资源';
+        const sourceName = allResults[sourceKey]?.source_name || resourceOptions.find(opt => opt.key === sourceKey)?.name || '未知资源';
         const speedResult = speedResults[sourceKey] || { speed: -1, error: '未测试' };
-        
+
         html += `
             <div class="relative group ${isCurrentSource ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:scale-105 transition-transform'}" 
                  ${!isCurrentSource ? `onclick="switchToResource('${sourceKey}', '${result.vod_id}')"` : ''}>
@@ -1683,8 +1799,6 @@ async function showSwitchResourceModal() {
                          alt="${result.vod_name}"
                          class="w-full h-full object-cover"
                          onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNjY2IiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHJlY3QgeD0iMyIgeT0iMyIgd2lkdGg9IjE4IiBoZWlnaHQ9IjE4IiByeD0iMiIgcnk9IjIiPjwvcmVjdD48cGF0aCBkPSJNMjEgMTV2NGEyIDIgMCAwIDEtMiAySDVhMiAyIDAgMCAxLTItMnYtNCI+PC9wYXRoPjxwb2x5bGluZSBwb2ludHM9IjE3IDggMTIgMyA3IDgiPjwvcG9seWxpbmU+PHBhdGggZD0iTTEyIDN2MTIiPjwvcGF0aD48L3N2Zz4='">
-                    
-                    <!-- 速率显示在图片右上角 -->
                     <div class="absolute top-1 right-1 speed-badge bg-black bg-opacity-75">
                         ${formatSpeedDisplay(speedResult)}
                     </div>
@@ -1706,7 +1820,7 @@ async function showSwitchResourceModal() {
             </div>
         `;
     }
-    
+
     html += '</div>';
     modalContent.innerHTML = html;
 }
@@ -1764,25 +1878,104 @@ async function switchToResource(sourceKey, vodId) {
             targetIndex = currentIndex;
         }
         
+        const descriptionText = data.videoInfo?.desc ? data.videoInfo.desc.replace(/<[^>]+>/g, '').trim() : '';
+        let sourceDisplayName = data.videoInfo?.source_name || '';
+        if (API_SITES[sourceKey]) {
+            sourceDisplayName = API_SITES[sourceKey].name;
+        } else if (sourceKey.startsWith('custom_')) {
+            try {
+                const customList = JSON.parse(localStorage.getItem('customAPIs') || '[]');
+                const customIndex = parseInt(sourceKey.replace('custom_', ''), 10);
+                if (!isNaN(customIndex) && customList[customIndex] && customList[customIndex].name) {
+                    sourceDisplayName = customList[customIndex].name;
+                }
+            } catch (e) {
+            }
+        }
+        const detailMeta = {
+            title: currentVideoTitle || data.videoInfo?.name || data.videoInfo?.vod_name || '',
+            sourceName: sourceDisplayName || sourceKey,
+            sourceCode: sourceKey,
+            year: data.videoInfo?.year || '',
+            type: data.videoInfo?.type || '',
+            area: data.videoInfo?.area || '',
+            director: data.videoInfo?.director || '',
+            actor: data.videoInfo?.actor || '',
+            remarks: data.videoInfo?.remarks || '',
+            desc: descriptionText || '',
+            pic: data.videoInfo?.pic || data.videoInfo?.vod_pic || data.videoInfo?.cover || '',
+            vod_id: vodId
+        };
+
+        try {
+            localStorage.setItem('currentVideoDetail', JSON.stringify(detailMeta));
+            const storedSourcesRaw = localStorage.getItem('currentAvailableSources');
+            if (storedSourcesRaw) {
+                const storedSources = JSON.parse(storedSourcesRaw);
+                const idx = storedSources.findIndex(item => item && String(item.source_code || item.sourceCode) === String(sourceKey));
+                const mergedSource = {
+                    source_code: sourceKey,
+                    source_name: sourceDisplayName || sourceKey,
+                    vod_id: vodId,
+                    vod_name: detailMeta.title,
+                    vod_pic: detailMeta.pic || '',
+                    vod_year: detailMeta.year || '',
+                    vod_remarks: detailMeta.remarks || '',
+                    type_name: detailMeta.type || '',
+                    vod_area: detailMeta.area || ''
+                };
+                if (idx !== -1) {
+                    storedSources[idx] = { ...storedSources[idx], ...mergedSource };
+                } else {
+                    storedSources.push(mergedSource);
+                }
+                localStorage.setItem('currentAvailableSources', JSON.stringify(storedSources));
+            }
+        } catch (e) {
+            console.warn('更新视频详情或资源缓存失败:', e);
+        }
+
         // 获取目标集数的URL
         const targetUrl = data.episodes[targetIndex];
-        
-        // 构建播放页面URL
-        const watchUrl = `player.html?id=${vodId}&source=${sourceKey}&url=${encodeURIComponent(targetUrl)}&index=${targetIndex}&title=${encodeURIComponent(currentVideoTitle)}`;
-        
-        // 保存当前状态到localStorage
+
+        const playerUrl = new URL('player.html', window.location.origin);
+        if (vodId) {
+            playerUrl.searchParams.set('id', vodId);
+        }
+        playerUrl.searchParams.set('source', sourceKey);
+        playerUrl.searchParams.set('url', targetUrl);
+        playerUrl.searchParams.set('index', targetIndex);
+        playerUrl.searchParams.set('title', currentVideoTitle || '未知视频');
+
+        const currentParams = new URLSearchParams(window.location.search);
+        const existingReturnUrl = currentParams.get('returnUrl');
+        if (existingReturnUrl) {
+            playerUrl.searchParams.set('returnUrl', decodeURIComponent(existingReturnUrl));
+        } else {
+            const fallbackReturn = localStorage.getItem('lastPageUrl') || '/';
+            playerUrl.searchParams.set('returnUrl', fallbackReturn);
+        }
+
+        if (Array.isArray(data.episodes) && data.episodes.length > 0) {
+            playerUrl.searchParams.set('episodes', JSON.stringify(data.episodes));
+        }
+
         try {
-            localStorage.setItem('currentVideoTitle', data.vod_name || '未知视频');
+            localStorage.setItem('currentVideoTitle', data.vod_name || currentVideoTitle || '未知视频');
             localStorage.setItem('currentEpisodes', JSON.stringify(data.episodes));
             localStorage.setItem('currentEpisodeIndex', targetIndex);
             localStorage.setItem('currentSourceCode', sourceKey);
             localStorage.setItem('lastPlayTime', Date.now());
+            const cachedSources = JSON.parse(localStorage.getItem('currentAvailableSources') || '[]');
+            const cachedIndex = cachedSources.findIndex(src => src && src.source_code === sourceKey);
+            if (cachedIndex >= 0) {
+                localStorage.setItem('currentAvailableSourceIndex', cachedIndex);
+            }
         } catch (e) {
             console.error('保存播放状态失败:', e);
         }
 
-        // 跳转到播放页面
-        window.location.href = watchUrl;
+        window.location.href = playerUrl.toString();
         
     } catch (error) {
         console.error('切换资源失败:', error);
