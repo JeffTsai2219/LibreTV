@@ -41,6 +41,16 @@ app.use((req, res, next) => {
   next();
 });
 
+app.get('/robots.txt', (req, res) => {
+  res.type('text/plain');
+  res.sendFile(path.join(__dirname, 'robots.txt'));
+});
+
+app.get('/sitemap.xml', (req, res) => {
+  res.type('application/xml');
+  res.sendFile(path.join(__dirname, 'sitemap.xml'));
+});
+
 app.get(['/', '/index.html', '/player.html'], (req, res) => {
   try {
     const fileName = req.path === '/player.html' ? 'player.html' : 'index.html';
