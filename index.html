@@ -325,6 +325,23 @@
                     <div id="douban-results"
                         class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3">
                     </div>
+                    <div id="douban-pagination"
+                        class="mt-6 flex flex-col items-center gap-2 text-sm text-gray-400 hidden">
+                        <nav class="pagination inline-flex items-center gap-2" aria-label="Pagination">
+                            <a id="douban-prev"
+                                class="pagination__prev h-9 min-w-[2.75rem] px-3 rounded-md border border-[#333] bg-[#1a1a1a] text-gray-300 hover:bg-pink-700 hover:text-white transition-colors flex items-center justify-center"
+                                href="#" aria-label="上一页" aria-disabled="true">
+                                上一页
+                            </a>
+                            <ul id="douban-page-numbers" class="pagination__pages flex items-center gap-1"></ul>
+                            <a id="douban-next"
+                                class="pagination__next h-9 min-w-[2.75rem] px-3 rounded-md border border-[#333] bg-[#1a1a1a] text-gray-300 hover:bg-pink-700 hover:text-white transition-colors flex items-center justify-center"
+                                href="#" aria-label="下一页" aria-disabled="false">
+                                下一页
+                            </a>
+                        </nav>
+                        <span id="douban-page-info" class="text-xs text-gray-500">第 1 页</span>
+                    </div>
                 </div>
             </div>
 

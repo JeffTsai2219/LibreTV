@@ -52,6 +52,229 @@ let doubanMovieTvCurrentSwitch = 'movie';
 let doubanCurrentTag = '热门';
 let doubanPageStart = 0;
 const doubanPageSize = 16; // 一次显示的项目数量
+let doubanCurrentPage = 1;
+let doubanHasMore = true;
+let doubanIsLoading = false;
+let doubanMaxPageSeen = 1;
+let doubanTotalPages = null;
+
+function resetDoubanPaginationState() {
+    doubanCurrentPage = 1;
+    doubanPageStart = 0;
+    doubanHasMore = true;
+    doubanMaxPageSeen = 1;
+    doubanTotalPages = null;
+    updateDoubanPaginationControls(0);
+}
+
+function setDoubanPaginationButtonState(control, disabled) {
+    if (!control) return;
+    const isButton = control.tagName === 'BUTTON';
+    const isLink = control.tagName === 'A';
+
+    if (isButton) {
+        control.disabled = disabled;
+    } else if (isLink) {
+        if (disabled) {
+            control.setAttribute('tabindex', '-1');
+        } else {
+            control.removeAttribute('tabindex');
+        }
+    }
+
+    control.setAttribute('aria-disabled', disabled ? 'true' : 'false');
+    if (disabled) {
+        control.classList.add('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
+    } else {
+        control.classList.remove('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
+    }
+}
+
+function updateDoubanPaginationControls(subjectsLength = 0) {
+    const pagination = document.getElementById('douban-pagination');
+    const prevBtn = document.getElementById('douban-prev');
+    const nextBtn = document.getElementById('douban-next');
+    const info = document.getElementById('douban-page-info');
+    const numbers = document.getElementById('douban-page-numbers');
+
+    if (!pagination || !prevBtn || !nextBtn || !info || !numbers) return;
+
+    const hasVisibleContent = subjectsLength > 0 || doubanCurrentPage > 1 || doubanHasMore;
+    if (hasVisibleContent) {
+        pagination.classList.remove('hidden');
+    } else {
+        pagination.classList.add('hidden');
+        numbers.innerHTML = '';
+        info.textContent = '';
+        return;
+    }
+
+    const slots = 10;
+    const middleSlots = slots - 2;
+
+    const knownMaxPage = Number.isInteger(doubanTotalPages) && doubanTotalPages > 0 ? doubanTotalPages : null;
+    let maxDisplayPage;
+    if (knownMaxPage) {
+        maxDisplayPage = knownMaxPage;
+    } else if (doubanHasMore) {
+        maxDisplayPage = Math.max(doubanMaxPageSeen, doubanCurrentPage + (slots - 1));
+    } else {
+        maxDisplayPage = Math.max(doubanMaxPageSeen, doubanCurrentPage);
+    }
+    maxDisplayPage = Math.max(maxDisplayPage, 1);
+
+    doubanMaxPageSeen = Math.max(doubanMaxPageSeen, doubanCurrentPage, maxDisplayPage);
+
+    numbers.innerHTML = '';
+    const pagesToRender = [];
+
+    const pushItem = (type, value = null) => {
+        pagesToRender.push({ type, value });
+    };
+
+    // 第一个块固定为第1页
+    pushItem('page', 1);
+
+    const middlePages = [];
+    if (maxDisplayPage > 2) {
+        let middleStart = Math.max(2, doubanCurrentPage - Math.floor(middleSlots / 2));
+        let middleEnd = middleStart + middleSlots - 1;
+
+        if (middleEnd > maxDisplayPage - 1) {
+            middleEnd = maxDisplayPage - 1;
+            middleStart = Math.max(2, middleEnd - middleSlots + 1);
+        }
+
+        if (middleStart < 2) {
+            middleStart = 2;
+            middleEnd = Math.min(maxDisplayPage - 1, middleStart + middleSlots - 1);
+        }
+
+        for (let page = middleStart; page <= middleEnd; page++) {
+            if (page >= maxDisplayPage) break;
+            middlePages.push(page);
+            if (middlePages.length >= middleSlots) break;
+        }
+    }
+
+    while (middlePages.length < middleSlots) {
+        middlePages.push(null);
+    }
+
+    middlePages.slice(0, middleSlots).forEach(page => {
+        if (typeof page === 'number' && page > 1 && page < maxDisplayPage) {
+            pushItem('page', page);
+        } else {
+            pushItem('placeholder');
+        }
+    });
+
+    // 最后一个块固定为最后一页
+    pushItem('page', maxDisplayPage);
+
+    while (pagesToRender.length < slots) {
+        pushItem('placeholder');
+    }
+
+    pagesToRender.slice(0, slots).forEach(item => {
+        const li = document.createElement('li');
+        li.className = 'list-none';
+
+        if (item.type === 'placeholder') {
+            const span = document.createElement('span');
+            span.textContent = '…';
+            span.className = 'min-w-[2.75rem] h-9 px-3 flex items-center justify-center border border-[#333] bg-[#1a1a1a] text-gray-500 rounded-md select-none';
+            span.setAttribute('aria-hidden', 'true');
+            li.appendChild(span);
+            numbers.appendChild(li);
+            return;
+        }
+
+        const page = item.value;
+        const link = document.createElement('a');
+        const isActive = page === doubanCurrentPage;
+        link.href = '#';
+        link.textContent = page;
+        const baseClass = 'min-w-[2.75rem] h-9 px-3 rounded-md border bg-[#1a1a1a] text-gray-300 hover:bg-pink-700 hover:text-white transition-colors flex items-center justify-center';
+        const activeClass = 'border-pink-500 bg-pink-600 text-white shadow-md cursor-default pointer-events-none';
+        const inactiveClass = 'border-[#333]';
+        link.className = isActive ? `${baseClass} ${activeClass}` : `${baseClass} ${inactiveClass}`;
+        link.setAttribute('aria-label', `跳转到第 ${page} 页`);
+        link.setAttribute('aria-disabled', 'false');
+
+        if (isActive) {
+            link.setAttribute('aria-current', 'page');
+            link.setAttribute('aria-disabled', 'true');
+        } else if (!doubanIsLoading) {
+            link.addEventListener('click', (event) => {
+                event.preventDefault();
+                goToDoubanPage(page);
+            });
+        } else {
+            link.setAttribute('aria-disabled', 'true');
+            link.classList.add('opacity-70', 'cursor-not-allowed', 'pointer-events-none');
+        }
+
+        li.appendChild(link);
+        numbers.appendChild(li);
+    });
+
+    const startIndex = subjectsLength > 0 ? doubanPageStart + 1 : Math.max(1, doubanPageStart + 1);
+    const endIndex = doubanPageStart + subjectsLength;
+    const totalInfo = knownMaxPage ? `（共 ${knownMaxPage} 页）` : '';
+    if (subjectsLength > 0) {
+        info.textContent = `第 ${doubanCurrentPage} 页 · 显示 ${startIndex}-${endIndex}${totalInfo}`;
+    } else {
+        info.textContent = `第 ${doubanCurrentPage} 页${totalInfo}`;
+    }
+
+    const disablePrev = doubanCurrentPage <= 1 || doubanIsLoading;
+    const disableNext = (knownMaxPage ? doubanCurrentPage >= knownMaxPage : !doubanHasMore) || doubanIsLoading;
+
+    setDoubanPaginationButtonState(prevBtn, disablePrev);
+    setDoubanPaginationButtonState(nextBtn, disableNext);
+}
+
+function setupDoubanPaginationControls() {
+    const prevBtn = document.getElementById('douban-prev');
+    const nextBtn = document.getElementById('douban-next');
+
+    if (prevBtn) {
+        prevBtn.addEventListener('click', (event) => {
+            event.preventDefault();
+            if (doubanIsLoading || doubanCurrentPage <= 1) return;
+            goToDoubanPage(doubanCurrentPage - 1);
+        });
+    }
+
+    if (nextBtn) {
+        nextBtn.addEventListener('click', (event) => {
+            event.preventDefault();
+            if (doubanIsLoading) return;
+            if (!doubanHasMore) {
+                showToast('已经是最后一页', 'info');
+                return;
+            }
+            goToDoubanPage(doubanCurrentPage + 1);
+        });
+    }
+}
+
+function goToDoubanPage(pageNumber) {
+    if (pageNumber < 1 || doubanIsLoading || pageNumber === doubanCurrentPage) return;
+    if (Number.isInteger(doubanTotalPages) && doubanTotalPages > 0 && pageNumber > doubanTotalPages) {
+        showToast('已经是最后一页', 'info');
+        return;
+    }
+    if (pageNumber > doubanCurrentPage && !doubanHasMore) {
+        showToast('已经是最后一页', 'info');
+        return;
+    }
+
+    doubanCurrentPage = pageNumber;
+    doubanPageStart = (doubanCurrentPage - 1) * doubanPageSize;
+    renderRecommend(doubanCurrentTag, doubanPageSize, doubanPageStart);
+}
 
 // 初始化豆瓣功能
 function initDouban() {
@@ -115,6 +338,8 @@ function initDouban() {
     
     // 换一批按钮事件监听
     setupDoubanRefreshBtn();
+    setupDoubanPaginationControls();
+    updateDoubanPaginationControls(0);
     
     // 初始加载热门内容
     if (localStorage.getItem('doubanEnabled') === 'true') {
@@ -132,14 +357,21 @@ function updateDoubanVisibility() {
         !document.getElementById('resultsArea').classList.contains('hidden');
     
     // 只有在启用且没有搜索结果显示时才显示豆瓣区域
+    const pagination = document.getElementById('douban-pagination');
     if (isEnabled && !isSearching) {
         doubanArea.classList.remove('hidden');
         // 如果豆瓣结果为空，重新加载
         if (document.getElementById('douban-results').children.length === 0) {
             renderRecommend(doubanCurrentTag, doubanPageSize, doubanPageStart);
         }
+        if (pagination) {
+            pagination.classList.remove('hidden');
+        }
     } else {
         doubanArea.classList.add('hidden');
+        if (pagination) {
+            pagination.classList.add('hidden');
+        }
     }
 }
 
@@ -284,6 +516,7 @@ function renderDoubanMovieTvSwitch() {
             
             doubanMovieTvCurrentSwitch = 'movie';
             doubanCurrentTag = '热门';
+            resetDoubanPaginationState();
 
             // 重新加载豆瓣内容
             renderDoubanTags(movieTags);
@@ -310,6 +543,7 @@ function renderDoubanMovieTvSwitch() {
             
             doubanMovieTvCurrentSwitch = 'tv';
             doubanCurrentTag = '热门';
+            resetDoubanPaginationState();
 
             // 重新加载豆瓣内容
             renderDoubanTags(tvTags);
@@ -365,7 +599,7 @@ function renderDoubanTags(tags) {
         btn.onclick = function() {
             if (doubanCurrentTag !== tag) {
                 doubanCurrentTag = tag;
-                doubanPageStart = 0;
+                resetDoubanPaginationState();
                 renderRecommend(doubanCurrentTag, doubanPageSize, doubanPageStart);
                 renderDoubanTags();
             }
@@ -382,12 +616,12 @@ function setupDoubanRefreshBtn() {
     if (!btn) return;
     
     btn.onclick = function() {
-        doubanPageStart += doubanPageSize;
-        if (doubanPageStart > 9 * doubanPageSize) {
-            doubanPageStart = 0;
+        if (doubanIsLoading) return;
+        if (!doubanHasMore) {
+            showToast('已经是最后一页', 'info');
+            return;
         }
-        
-        renderRecommend(doubanCurrentTag, doubanPageSize, doubanPageStart);
+        goToDoubanPage(doubanCurrentPage + 1);
     };
 }
 
@@ -421,6 +655,9 @@ function renderRecommend(tag, pageLimit, pageStart) {
     const container = document.getElementById("douban-results");
     if (!container) return;
 
+    doubanIsLoading = true;
+    updateDoubanPaginationControls(0);
+
     const loadingOverlayHTML = `
         <div class="absolute inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-10">
             <div class="flex items-center justify-center">
@@ -438,7 +675,34 @@ function renderRecommend(tag, pageLimit, pageStart) {
     // 使用通用请求函数
     fetchDoubanData(target)
         .then(data => {
+            const subjectsLength = Array.isArray(data?.subjects) ? data.subjects.length : 0;
+
+            const totalItems = [data?.total, data?.total_count, data?.subject_total, data?.count]
+                .map(value => Number(value))
+                .find(value => Number.isFinite(value) && value > 0);
+            const pageCount = [data?.pagecount, data?.page_count, data?.page_total]
+                .map(value => Number(value))
+                .find(value => Number.isFinite(value) && value > 0);
+
+            if (Number.isFinite(pageCount) && pageCount > 0) {
+                doubanTotalPages = Math.max(1, Math.ceil(pageCount));
+            } else if (Number.isFinite(totalItems) && totalItems > 0) {
+                doubanTotalPages = Math.max(1, Math.ceil(totalItems / pageLimit));
+            }
+
+            if (Number.isInteger(doubanTotalPages) && doubanTotalPages > 0) {
+                doubanHasMore = doubanCurrentPage < doubanTotalPages;
+            } else {
+                doubanHasMore = subjectsLength === pageLimit;
+            }
+
+            if (subjectsLength === 0) {
+                doubanHasMore = false;
+            }
+
+            doubanIsLoading = false;
             renderDoubanCards(data, container);
+            updateDoubanPaginationControls(subjectsLength);
         })
         .catch(error => {
             console.error("获取豆瓣数据失败：", error);
@@ -448,6 +712,8 @@ function renderRecommend(tag, pageLimit, pageStart) {
                     <div class="text-gray-500 text-sm mt-2">提示：使用VPN可能有助于解决此问题</div>
                 </div>
             `;
+            doubanIsLoading = false;
+            updateDoubanPaginationControls(0);
         });
 }
 
@@ -765,7 +1031,7 @@ function deleteTag(tag) {
         // 如果当前选中的是被删除的标签，则重置为"热门"
         if (doubanCurrentTag === tag) {
             doubanCurrentTag = '热门';
-            doubanPageStart = 0;
+            resetDoubanPaginationState();
             renderRecommend(doubanCurrentTag, doubanPageSize, doubanPageStart);
         }
         
@@ -790,7 +1056,7 @@ function resetTagsToDefault() {
     
     // 设置当前标签为热门
     doubanCurrentTag = '热门';
-    doubanPageStart = 0;
+    resetDoubanPaginationState();
     
     // 保存到本地存储
     saveUserTags();
